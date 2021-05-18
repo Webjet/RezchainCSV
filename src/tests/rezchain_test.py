@@ -24,16 +24,16 @@ OPTIONAL = {
 
 class TestStringMethods(unittest.TestCase):
     def test_required(self):
-        rz = Rezchain(REQUIRED, "test")
+        rz = Rezchain(REQUIRED)
         self.assertEqual(set(rz.types.keys()), set(REQUIRED.values()))
         # self.assertEqual('foo'.upper(), 'FOO')
 
     def test_optional(self):
         # rz = Rezchain(OPTIONAL, "test")
-        self.assertRaises(MapMissing, Rezchain, OPTIONAL, "test")
+        self.assertRaises(MapMissing, Rezchain, OPTIONAL)
 
     def test_csv(self):
-        rz = Rezchain({**REQUIRED, **OPTIONAL}, "test")
+        rz = Rezchain({**REQUIRED, **OPTIONAL})
         for i in range(100):
             it = {
                 "reference": i,

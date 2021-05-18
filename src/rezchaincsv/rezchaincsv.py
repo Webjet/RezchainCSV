@@ -1,14 +1,13 @@
-from datetime import date
-from collections import OrderedDict
 import csv
-import numbers
-from datetime import datetime, date
+import tempfile
+from typing import TextIO
 
 # pip3 install azure-storage-file-share
 from azure.storage.fileshare import ShareFileClient
 
 
 from .exceptions import *
+from .types import *
 
 DEFAULT_MAPPING = {
     "CommonReferenceID": "Common Reference ID",
@@ -28,43 +27,7 @@ DEFAULT_MAPPING = {
 DATE_FORMAT = ""
 
 
-class Number():
-    def check(self, v):
-        if not isinstance(v, numbers.Number):
-            raise TypeError(v)
-        return float(v)
-
-
-class Str():
-    def check(self, v):
-        return str(v)
-
-
-class Datetime():
-    def check(self, v):
-        if isinstance(v, datetime):
-            return v.isoformat(sep=' ', timespec='seconds')
-        try:
-            d = datetime.fromisoformat(v)
-            return d.isoformat(sep=' ', timespec='seconds')
-        except ValueError:
-            raise TypeError(v)
-
-
-class Date():
-    def check(self, v):
-        if isinstance(v, datetime):
-            return v.date().isoformat()
-        if isinstance(v, date):
-            return v.isoformat()
-        try:
-            date.fromisoformat(v)
-            return v
-        except ValueError:
-            raise TypeError(v)
-
-
-REQUIRED = {
+REQUIRED_FIELDS = {
     "Common Reference ID": Str(),
     "Amount": Number(),
     "Currency": Str(),
@@ -72,7 +35,7 @@ REQUIRED = {
     "Last Modified Date": Datetime(),
 }
 
-OPTIONAL = {
+OPTIONAL_FIELDS = {
     "Check In Date": Date(),
     "Check Out Date": Date(),
     "Number Of Nights": Number(),
@@ -82,42 +45,42 @@ OPTIONAL = {
 }
 
 
-class RezchainItem:
-    def __init__(self, map: dict):
-        """
-        self.CommonReferenceID = CommonReferenceID
-        self.Amount = Amount
-        self.Currency = Currency
-        self.BookingStatus = BookingStatus
-        self.LastModifiedDate = LastModifiedDate
-        self.CheckInDate = CheckInDate
-        self.CheckOutDate = CheckOutDate
-        self.NumberOfNights = NumberOfNights
-        self.NumberOfRooms = NumberOfRooms
-        self.BookingCreationDate = BookingCreationDate
-        self.YourBookingID = YourBookingID
-        """
-
-
 class Rezchain:
-    def __init__(self, map: dict, prefix: str):
+    def __init__(self, map: dict):
+        # Create and return a Rezchain object.
+        # map is a dictionary that maps original rezchain terms to field names
+        #
+        # REQUIRED_FIELDS
+        # "Common Reference ID": Str(),
+        # "Amount": Number(),
+        # "Currency": Str(),
+        # "Booking Status": Str(),
+        # "Last Modified Date": Datetime(),
+        #
+        # OPTIONAL_FIELDS
+        # "Check In Date": Date(),
+        # "Check Out Date": Date(),
+        # "Number Of Nights": Number(),
+        # "Number Of Rooms": Number(),
+        # "Booking Creation Date": Date(),
+        # "Your Booking ID": Str(),
+
         self.types = {}
-        for k in REQUIRED.keys():
+        for k in REQUIRED_FIELDS.keys():
             if k not in map:
                 raise MapMissing(k)
 
         for k, v in map.items():
             which = None
-            if k in REQUIRED:
-                which = REQUIRED
-            elif k in OPTIONAL:
-                which = OPTIONAL
+            if k in REQUIRED_FIELDS:
+                which = REQUIRED_FIELDS
+            elif k in OPTIONAL_FIELDS:
+                which = OPTIONAL_FIELDS
             else:
                 raise MapWrong(k, v)
             self.types[v] = which[k]
 
         self.map = map
-        self.prefix = prefix
         self.items = []
 
     def add_item(self, item: dict):
@@ -128,8 +91,22 @@ class Rezchain:
         self.items.append(item)
 
     def to_csv(self, name: str):
-        with open(name, 'w', newline='') as csvfile:
-            writer = csv.DictWriter(csvfile, fieldnames=self.types.keys())
-            writer.writeheader()
-            for it in self.items:
-                writer.writerow(it)
+        with open(name, 'w') as file:
+            self.file_to_csv(file)
+
+    def file_to_csv(self, file: TextIO):
+        writer = csv.DictWriter(file, fieldnames=self.types.keys())
+        writer.writeheader()
+        for it in self.items:
+            writer.writerow(it)
+
+    def to_azure(self, filename: str, share_name: str, conn_string: str):
+        azure_client = ShareFileClient.from_connection_string(
+            conn_str=conn_string,
+            share_name=share_name,
+            file_path=filename
+        )
+
+        with tempfile.NamedTemporaryFile(mode='w', newline='') as file:
+            self.file_to_csv(file)
+            azure_client.upload_file(file)
