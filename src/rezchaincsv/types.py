@@ -9,9 +9,6 @@ class RezchainType:
 
 
 class Number(RezchainType):
-    def __init__(self, null=False):
-        super().__init__(null=null)
-
     def check(self, v):
         if not self.null and not isinstance(v, numbers.Number):
             raise ValueError(v)
@@ -27,9 +24,6 @@ class Number(RezchainType):
 
 
 class Str(RezchainType):
-    def __init__(self, null=False):
-        super().__init__(null=null)
-
     def check(self, v):
         if self.null and not v:
             return ''
@@ -37,25 +31,19 @@ class Str(RezchainType):
 
 
 class Datetime(RezchainType):
-    def __init__(self, null=False):
-        super().__init__(null=null)
-
     def check(self, v):
         if isinstance(v, datetime):
             return v.isoformat(sep=' ', timespec='seconds')
         try:
             d = datetime.fromisoformat(v)
             return d.isoformat(sep=' ', timespec='seconds')
-        except ValueError:
+        except (TypeError, ValueError):
             if self.null:
                 return ''
             raise ValueError(v)
 
 
 class Date(RezchainType):
-    def __init__(self, null=False):
-        super().__init__(null=null)
-
     def check(self, v):
         if isinstance(v, datetime):
             return v.date().isoformat()
@@ -64,7 +52,7 @@ class Date(RezchainType):
         try:
             date.fromisoformat(v)
             return v
-        except ValueError:
+        except (TypeError, ValueError):
             if self.null:
                 return ''
             raise ValueError(v)

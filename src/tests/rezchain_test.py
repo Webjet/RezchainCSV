@@ -34,6 +34,7 @@ class TestStringMethods(unittest.TestCase):
         m["test"] = None
         m["test_number"] = Number(null=True)
         m["test_null"] = Number(null=True)
+        m["date_null"] = Date(null=True)
         rz = Rezchain(m)
         d = {
             "reference": "id",
@@ -44,6 +45,7 @@ class TestStringMethods(unittest.TestCase):
             "test": 5,
             "test_number": "7",
             "test_null": "a",
+            "date_null": "z",
         }
         it = rz.add_item(d)
         self.assertIsInstance(it["test"], str)

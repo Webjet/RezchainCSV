@@ -59,23 +59,46 @@ OPTIONAL_FIELDS = {
 
 class Rezchain:
     def __init__(self, map: dict):
-        # Create and return a Rezchain object.
-        # map is a dictionary that maps original rezchain terms to field names
-        #
-        # REQUIRED_FIELDS
-        # "Common Reference ID": Str(),
-        # "Amount": Number(),
-        # "Currency": Str(),
-        # "Booking Status": Str(),
-        # "Last Modified Date": Datetime(),
-        #
-        # OPTIONAL_FIELDS
-        # "Check In Date": Date(),
-        # "Check Out Date": Date(),
-        # "Number Of Nights": Number(),
-        # "Number Of Rooms": Number(),
-        # "Booking Creation Date": Date(),
-        # "Your Booking ID": Str(),
+        """
+        Create and return a Rezchain object.
+        map is a dictionary that maps original rezchain terms to field names
+
+        The definitions are as follows
+        REQUIRED_FIELDS = {
+            COMMON_ID: Str(),
+            AMOUNT: Number(),
+            CURRENCY: Str(),
+            STATUS: Str(),
+            LAST_MODIFIED: Datetime(),
+        }
+
+        OPTIONAL_FIELDS = {
+            CHECKIN: Date(),
+            CHECKOUT: Date(),
+            NIGHTS: Number(),
+            ROOMS: Number(),
+            CREATION: Date(),
+            ID: Str(),
+        }
+
+        Example of a map in Webbeds:
+        SH_MAPPING = {
+            'BookingID': rz.COMMON_ID,
+            'PartnerName': None,
+            'BookingStatus': rz.STATUS,
+            'PartnerReference': None,
+            'AddedDate': rz.Datetime(null=True),
+            'CancelDate': rz.Datetime(null=True),
+            'LastChanged': rz.LAST_MODIFIED,
+            'checkInDate': rz.CHECKIN,
+            'checkOutDate': rz.CHECKOUT,
+            'Nights': rz.NIGHTS,
+            'NumberofRooms': rz.ROOMS,
+            'Currency': rz.CURRENCY,
+            'OriginalNetAmount': rz.Number(null=0),
+            'CurrentNetAmount': rz.AMOUNT,
+        }
+        """
 
         self.types = {}
         mapped = set()
@@ -101,6 +124,9 @@ class Rezchain:
         self.items = []
 
     def add_item(self, item: dict):
+        # It accepts a dictionary, keys are the names of the fields.
+        # Fields not in the mapp are ignored.
+
         it = {}
         for k, v in item.items():
             if k not in self.types:
@@ -110,16 +136,21 @@ class Rezchain:
         return it
 
     def to_csv(self, name: str):
+        # Generate a csv file with the specified file name
         with open(name, 'w') as file:
             self.file_to_csv(file)
 
     def file_to_csv(self, file: TextIO):
+        # Generate a csv file with the specified file object
         writer = csv.DictWriter(file, fieldnames=self.types.keys())
         writer.writeheader()
         for it in self.items:
             writer.writerow(it)
 
     def to_azure(self, filename: str, share_name: str, conn_string: str):
+        # Upload to the CSV to Azure, you must provide the full filename
+        # together with the share name and connection string provided by Rezchain
+        # or your Azure administrator
         azure_client = ShareFileClient.from_connection_string(
             conn_str=conn_string,
             share_name=share_name,
