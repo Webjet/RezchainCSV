@@ -82,6 +82,8 @@ class Rezchain:
         for k, v in map.items():
             if v is None:
                 type = Str()
+            elif isinstance(v, RezchainType):
+                type = v
             elif v in REQUIRED_FIELDS:
                 type = REQUIRED_FIELDS[v]
             elif v in OPTIONAL_FIELDS:
@@ -102,7 +104,7 @@ class Rezchain:
         it = {}
         for k, v in item.items():
             if k not in self.types:
-                raise ItemWrong(k)
+                continue
             it[k] = self.types[k].check(v)
         self.items.append(it)
         return it

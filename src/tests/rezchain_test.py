@@ -1,8 +1,8 @@
+from numbers import Number
 import unittest
 from datetime import date, datetime
-from context import Rezchain, MapMissing
-from rezchaincsv.exceptions import ItemWrong, MapWrong
-# from rezchaincsv import Rezchain
+from context import *
+# from rezchaincsv.exceptions import ItemWrong, MapWrong
 
 
 REQUIRED = {
@@ -32,6 +32,8 @@ class TestStringMethods(unittest.TestCase):
         # Bad timestamp
         m = REQUIRED.copy()
         m["test"] = None
+        m["test_number"] = Number(null=True)
+        m["test_null"] = Number(null=True)
         rz = Rezchain(m)
         d = {
             "reference": "id",
@@ -40,10 +42,27 @@ class TestStringMethods(unittest.TestCase):
             "status": "status",
             "last_modified": "2021-01-01 00:00:00",
             "test": 5,
+            "test_number": "7",
+            "test_null": "a",
         }
         it = rz.add_item(d)
         self.assertIsInstance(it["test"], str)
         self.assertEqual(it["test"], "5")
+
+    def test_extra_error(self):
+        # Bad timestamp
+        m = REQUIRED.copy()
+        m["test_number"] = Number()
+        rz = Rezchain(m)
+        d = {
+            "reference": "id",
+            "amount": 1,
+            "currency": "CUR",
+            "status": "status",
+            "last_modified": "2021-01-01 00:00:00",
+            "test_number": "a",
+        }
+        self.assertRaises(ValueError, rz.add_item, d)
 
     def test_required(self):
         self.assertRaises(MapMissing, Rezchain, {"reference": "Common Reference ID"})
@@ -58,7 +77,7 @@ class TestStringMethods(unittest.TestCase):
             "status": "status",
             "last_modified": "2021-01-01-bad",
         }
-        self.assertRaises(TypeError, rz.add_item, d)
+        self.assertRaises(ValueError, rz.add_item, d)
 
     def test_bad_date(self):
         # Bad timestamp
@@ -73,12 +92,12 @@ class TestStringMethods(unittest.TestCase):
             "last_modified": "2021-01-01 00:00:00",
             "creation": "2021-01-234",
         }
-        self.assertRaises(TypeError, rz.add_item, d)
+        self.assertRaises(ValueError, rz.add_item, d)
 
     def test_unmapped(self):
         # Bad extra value
         rz = Rezchain(REQUIRED)
-        d = {
+        it = {
             "reference": "id",
             "amount": 1,
             "currency": "CUR",
@@ -86,7 +105,8 @@ class TestStringMethods(unittest.TestCase):
             "last_modified": "2021-01-01 00:00:00",
             "extra": "wrong"
         }
-        self.assertRaises(ItemWrong, rz.add_item, d)
+        it = rz.add_item(it)
+        self.assertFalse("extra" in it)
 
     def test_csv(self):
         rz = Rezchain({**REQUIRED, **OPTIONAL})

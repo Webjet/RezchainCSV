@@ -2,19 +2,44 @@ import numbers
 from datetime import datetime, date
 
 
-class Number():
-    def check(self, v):
-        if not isinstance(v, numbers.Number):
-            raise TypeError(v)
-        return float(v)
+class RezchainType:
+    def __init__(self, null=False):
+        self.null = null
+    pass
 
 
-class Str():
+class Number(RezchainType):
+    def __init__(self, null=False):
+        super().__init__(null=null)
+
     def check(self, v):
+        if not self.null and not isinstance(v, numbers.Number):
+            raise ValueError(v)
+        if self.null and not v:
+            return ''
+
+        try:
+            return float(v)
+        except ValueError:
+            if self.null:
+                return ''
+            raise ValueError
+
+
+class Str(RezchainType):
+    def __init__(self, null=False):
+        super().__init__(null=null)
+
+    def check(self, v):
+        if self.null and not v:
+            return ''
         return str(v)
 
 
-class Datetime():
+class Datetime(RezchainType):
+    def __init__(self, null=False):
+        super().__init__(null=null)
+
     def check(self, v):
         if isinstance(v, datetime):
             return v.isoformat(sep=' ', timespec='seconds')
@@ -22,10 +47,15 @@ class Datetime():
             d = datetime.fromisoformat(v)
             return d.isoformat(sep=' ', timespec='seconds')
         except ValueError:
-            raise TypeError(v)
+            if self.null:
+                return ''
+            raise ValueError(v)
 
 
-class Date():
+class Date(RezchainType):
+    def __init__(self, null=False):
+        super().__init__(null=null)
+
     def check(self, v):
         if isinstance(v, datetime):
             return v.date().isoformat()
@@ -35,4 +65,6 @@ class Date():
             date.fromisoformat(v)
             return v
         except ValueError:
-            raise TypeError(v)
+            if self.null:
+                return ''
+            raise ValueError(v)

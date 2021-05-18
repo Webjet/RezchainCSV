@@ -1,5 +1,5 @@
-__all__ = ["Rezchain", "MapMissing", "MapWrong", "ItemWrong"]
+# __all__ = ["Rezchain", "MapMissing", "MapWrong", "ItemWrong", ]
 
-from .rezchaincsv import Rezchain
+from .rezchaincsv import *
 from .exceptions import *
 from .types import *
