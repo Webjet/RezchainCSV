@@ -4,6 +4,10 @@ import csv
 import numbers
 from datetime import datetime, date
 
+# pip3 install azure-storage-file-share
+from azure.storage.fileshare import ShareFileClient
+
+
 from .exceptions import *
 
 DEFAULT_MAPPING = {
@@ -21,6 +25,9 @@ DEFAULT_MAPPING = {
 }
 
 
+DATE_FORMAT = ""
+
+
 class Number():
     def check(self, v):
         if not isinstance(v, numbers.Number):
@@ -30,25 +37,31 @@ class Number():
 
 class Str():
     def check(self, v):
-        if not isinstance(v, numbers.Number):
-            raise TypeError(v)
         return str(v)
 
 
 class Datetime():
     def check(self, v):
         if isinstance(v, datetime):
-            return v
-        raise TypeError(v)
+            return v.isoformat(sep=' ', timespec='seconds')
+        try:
+            d = datetime.fromisoformat(v)
+            return d.isoformat(sep=' ', timespec='seconds')
+        except ValueError:
+            raise TypeError(v)
 
 
 class Date():
     def check(self, v):
         if isinstance(v, datetime):
-            return v.date()
+            return v.date().isoformat()
         if isinstance(v, date):
+            return v.isoformat()
+        try:
+            date.fromisoformat(v)
             return v
-        raise TypeError(v)
+        except ValueError:
+            raise TypeError(v)
 
 
 REQUIRED = {
@@ -94,9 +107,14 @@ class Rezchain:
                 raise MapMissing(k)
 
         for k, v in map.items():
-            if k not in REQUIRED and k not in OPTIONAL:
+            which = None
+            if k in REQUIRED:
+                which = REQUIRED
+            elif k in OPTIONAL:
+                which = OPTIONAL
+            else:
                 raise MapWrong(k, v)
-            self.types[v] = map[k]
+            self.types[v] = which[k]
 
         self.map = map
         self.prefix = prefix
@@ -104,7 +122,14 @@ class Rezchain:
 
     def add_item(self, item: dict):
         for k, v in item.items():
-            if k != self.types:
+            if k not in self.types:
                 raise ItemWrong(k)
-            item[k] = self.types[k](v)
+            item[k] = self.types[k].check(v)
         self.items.append(item)
+
+    def to_csv(self, name: str):
+        with open(name, 'w', newline='') as csvfile:
+            writer = csv.DictWriter(csvfile, fieldnames=self.types.keys())
+            writer.writeheader()
+            for it in self.items:
+                writer.writerow(it)

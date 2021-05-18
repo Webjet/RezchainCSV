@@ -1,10 +1,11 @@
 import unittest
+from datetime import date, datetime
 from context import Rezchain, MapMissing
 # from rezchaincsv import Rezchain
 
 
 REQUIRED = {
-    "Common Reference ID": "reference_id",
+    "Common Reference ID": "reference",
     "Amount": "amount",
     "Currency": "currency",
     "Booking Status": "status",
@@ -30,6 +31,27 @@ class TestStringMethods(unittest.TestCase):
     def test_optional(self):
         # rz = Rezchain(OPTIONAL, "test")
         self.assertRaises(MapMissing, Rezchain, OPTIONAL, "test")
+
+    def test_csv(self):
+        rz = Rezchain({**REQUIRED, **OPTIONAL}, "test")
+        for i in range(100):
+            it = {
+                "reference": i,
+                "amount": i * 100,
+                "currency": f"CU{i}",
+                "status": "CONFIRMED",
+                "rooms": i,
+            }
+            if i % 2 == 0:
+                # test native times
+                it["last_modified"] = datetime.utcnow()
+                it["creation"] = date.today()
+            else:
+                # test iso times
+                it["last_modified"] = datetime.utcnow().isoformat()
+                it["creation"] = date.today().isoformat()
+            rz.add_item(it)
+        rz.to_csv("test.csv")
 
 
 if __name__ == '__main__':
