@@ -66,29 +66,34 @@ class Rezchain:
         # "Your Booking ID": Str(),
 
         self.types = {}
-        for k in REQUIRED_FIELDS.keys():
-            if k not in map:
-                raise MapMissing(k)
-
+        mapped = set()
         for k, v in map.items():
-            which = None
-            if k in REQUIRED_FIELDS:
-                which = REQUIRED_FIELDS
-            elif k in OPTIONAL_FIELDS:
-                which = OPTIONAL_FIELDS
+            if v is None:
+                type = Str()
+            elif v in REQUIRED_FIELDS:
+                type = REQUIRED_FIELDS[v]
+            elif v in OPTIONAL_FIELDS:
+                type = OPTIONAL_FIELDS[v]
             else:
                 raise MapWrong(k, v)
-            self.types[v] = which[k]
+            self.types[k] = type
+            mapped.add(v)
+
+        for k in REQUIRED_FIELDS.keys():
+            if k not in mapped:
+                raise MapMissing(k)
 
         self.map = map
         self.items = []
 
     def add_item(self, item: dict):
+        it = {}
         for k, v in item.items():
             if k not in self.types:
                 raise ItemWrong(k)
-            item[k] = self.types[k].check(v)
-        self.items.append(item)
+            it[k] = self.types[k].check(v)
+        self.items.append(it)
+        return it
 
     def to_csv(self, name: str):
         with open(name, 'w') as file:
