@@ -26,22 +26,34 @@ DEFAULT_MAPPING = {
 
 DATE_FORMAT = ""
 
+COMMON_ID = "Common Reference ID"
+AMOUNT = "Amount"
+CURRENCY = "Currency"
+STATUS = "Booking Status"
+LAST_MODIFIED = "Last Modified Date"
+CHECKIN = "Check In Date"
+CHECKOUT = "Check Out Date"
+NIGHTS = "Number Of Nights"
+ROOMS = "Number Of Rooms"
+CREATION = "Booking Creation Date"
+ID = "Your Booking ID"
+
 
 REQUIRED_FIELDS = {
-    "Common Reference ID": Str(),
-    "Amount": Number(),
-    "Currency": Str(),
-    "Booking Status": Str(),
-    "Last Modified Date": Datetime(),
+    COMMON_ID: Str(),
+    AMOUNT: Number(),
+    CURRENCY: Str(),
+    STATUS: Str(),
+    LAST_MODIFIED: Datetime(),
 }
 
 OPTIONAL_FIELDS = {
-    "Check In Date": Date(),
-    "Check Out Date": Date(),
-    "Number Of Nights": Number(),
-    "Number Of Rooms": Number(),
-    "Booking Creation Date": Date(),
-    "Your Booking ID": Str(),
+    CHECKIN: Date(),
+    CHECKOUT: Date(),
+    NIGHTS: Number(),
+    ROOMS: Number(),
+    CREATION: Date(),
+    ID: Str(),
 }
 
 
