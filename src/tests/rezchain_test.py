@@ -26,10 +26,8 @@ class TestStringMethods(unittest.TestCase):
     def test_required(self):
         rz = Rezchain(REQUIRED)
         self.assertEqual(set(rz.types.keys()), set(REQUIRED.values()))
-        # self.assertEqual('foo'.upper(), 'FOO')
 
     def test_optional(self):
-        # rz = Rezchain(OPTIONAL, "test")
         self.assertRaises(MapMissing, Rezchain, OPTIONAL)
 
     def test_csv(self):
