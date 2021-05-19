@@ -1,4 +1,5 @@
 import csv
+import os
 import tempfile
 from typing import TextIO
 
@@ -139,24 +140,28 @@ class Rezchain:
         # Generate a csv file with the specified file name
         with open(name, 'w') as file:
             self.file_to_csv(file)
+        return os.path.getsize(file.name)
 
-    def file_to_csv(self, file: TextIO):
+    def file_to_csv(self, file):
         # Generate a csv file with the specified file object
         writer = csv.DictWriter(file, fieldnames=self.types.keys())
         writer.writeheader()
         for it in self.items:
             writer.writerow(it)
 
-    def to_azure(self, filename: str, share_name: str, conn_string: str):
+    def to_azure(self, filename: str, share_name: str, conn_string: str, test=False):
         # Upload to the CSV to Azure, you must provide the full filename
         # together with the share name and connection string provided by Rezchain
         # or your Azure administrator
-        azure_client = ShareFileClient.from_connection_string(
-            conn_str=conn_string,
-            share_name=share_name,
-            file_path=filename
-        )
 
-        with tempfile.NamedTemporaryFile(mode='w', newline='') as file:
-            self.file_to_csv(file)
-            azure_client.upload_file(file)
+        with tempfile.NamedTemporaryFile() as file:
+            self.to_csv(file.name)
+            if not test:
+                azure_client = ShareFileClient.from_connection_string(
+                    conn_str=conn_string,
+                    share_name=share_name,
+                    file_path=filename
+                )
+                azure_client.upload_file(file)
+                file.seek(0)
+            return len(file.read())

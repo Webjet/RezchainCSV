@@ -1,4 +1,5 @@
 from numbers import Number
+import tempfile
 import unittest
 from datetime import date, datetime
 from context import *
@@ -129,7 +130,33 @@ class TestStringMethods(unittest.TestCase):
                 it["last_modified"] = datetime.utcnow().isoformat()
                 it["creation"] = date.today().isoformat()
             rz.add_item(it)
-        rz.to_csv("test.csv")
+        with tempfile.NamedTemporaryFile() as tmp:
+            tmp_size = rz.to_csv(tmp.name)
+        self.assertGreater(tmp_size, 0)
+
+    def test_azure(self):
+        rz = Rezchain({**REQUIRED, **OPTIONAL})
+        for i in range(100):
+            it = {
+                "reference": i,
+                "amount": i * 100,
+                "currency": f"CU{i}",
+                "status": "CONFIRMED",
+                "rooms": i,
+            }
+            if i % 2 == 0:
+                # test native times
+                it["last_modified"] = datetime.utcnow()
+                it["creation"] = date.today()
+            else:
+                # test iso times
+                it["last_modified"] = datetime.utcnow().isoformat()
+                it["creation"] = date.today().isoformat()
+            rz.add_item(it)
+        with tempfile.NamedTemporaryFile() as tmp:
+            tmp_size = rz.to_csv(tmp.name)
+        azure_size = rz.to_azure("", "", "", test=True)
+        self.assertAlmostEqual(tmp_size, azure_size)
 
 
 if __name__ == '__main__':
