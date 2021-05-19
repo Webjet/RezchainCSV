@@ -33,10 +33,10 @@ class Str(RezchainType):
 class Datetime(RezchainType):
     def check(self, v):
         if isinstance(v, datetime):
-            return v.isoformat(sep=' ', timespec='seconds')
+            return v.isoformat(sep=' ', timespec='minutes')
         try:
             d = datetime.fromisoformat(v)
-            return d.isoformat(sep=' ', timespec='seconds')
+            return d.isoformat(sep=' ', timespec='minutes')
         except (TypeError, ValueError):
             if self.null:
                 return ''
